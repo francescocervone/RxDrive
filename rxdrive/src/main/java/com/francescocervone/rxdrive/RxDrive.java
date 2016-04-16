@@ -35,10 +35,10 @@ import rx.subjects.PublishSubject;
 
 public class RxDrive {
 
-    private static PublishSubject<ConnectionState> mGoogleApiClientPublishSubject = PublishSubject.create();
+    private PublishSubject<ConnectionState> mGoogleApiClientPublishSubject = PublishSubject.create();
 
-    private static GoogleApiClient sClient;
-    private static GoogleApiClient.ConnectionCallbacks sConnectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
+    private GoogleApiClient mClient;
+    private GoogleApiClient.ConnectionCallbacks mConnectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             mGoogleApiClientPublishSubject.onNext(ConnectionState.connected(bundle));
@@ -50,65 +50,53 @@ public class RxDrive {
         }
     };
 
-    private static GoogleApiClient.OnConnectionFailedListener sConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
+    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
         @Override
         public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
             mGoogleApiClientPublishSubject.onNext(ConnectionState.failed(connectionResult));
         }
     };
 
-
-    private RxDrive() {
-    }
-
     /**
-     * Creates an Observable that emits the connection state changes the GoogleApiClient
-     *
      * @param builder is a GoogleApiClient builder for your application
-     * @return the Observable for connection state changes
      */
-    public static Observable<ConnectionState> connection(GoogleApiClient.Builder builder) {
-        sClient = builder.addApi(Drive.API)
-                .addConnectionCallbacks(sConnectionCallbacks)
-                .addOnConnectionFailedListener(sConnectionFailedListener)
+    public RxDrive(GoogleApiClient.Builder builder) {
+        mClient = builder.addApi(Drive.API)
+                .addConnectionCallbacks(mConnectionCallbacks)
+                .addOnConnectionFailedListener(mConnectionFailedListener)
                 .build();
-        return mGoogleApiClientPublishSubject.asObservable();
     }
+
+    /**
+     * @param context is necessary to create a new GoogleApiClient
+     */
+    public RxDrive(Context context) {
+        this(new GoogleApiClient.Builder(context)
+                .addScope(Drive.SCOPE_APPFOLDER));
+    }
+
 
     /**
      * Creates an Observable that emits the connection state changes the GoogleApiClient
      *
-     * @param context is necessary to create a new GoogleApiClient
      * @return the Observable for connection state changes
      */
-    public static Observable<ConnectionState> connection(Context context) {
-        if (sClient == null) {
-            GoogleApiClient.Builder builder = new GoogleApiClient.Builder(context)
-                    .addScope(Drive.SCOPE_APPFOLDER);
-            return connection(builder);
-        }
+    public Observable<ConnectionState> connection() {
         return mGoogleApiClientPublishSubject.asObservable();
     }
 
     /**
      * Establishes a connection with the GoogleApiClient created before
-     *
-     * @see #connection(GoogleApiClient.Builder)
-     * @see #connection(Context)
      */
-    public static void connect() {
-        if (sClient != null) {
-            sClient.connect();
-        }
+    public void connect() {
+        mClient.connect();
     }
 
     /**
      * Disconnects from GoogleApiClient
      */
-    public static void disconnect() {
-        if (sClient != null) {
-            sClient.disconnect();
-        }
+    public void disconnect() {
+        mClient.disconnect();
     }
 
     /**
@@ -116,8 +104,8 @@ public class RxDrive {
      *
      * @return true if GoogleApiClient is connected, false otherwise
      */
-    public static boolean isConnected() {
-        return sClient.isConnected();
+    public boolean isConnected() {
+        return mClient.isConnected();
     }
 
     /**
@@ -125,14 +113,14 @@ public class RxDrive {
      *
      * @return an Observable with the list of the files
      */
-    public static Observable<List<DriveFile>> listFiles() {
+    public Observable<List<DriveFile>> listFiles() {
         return Observable.defer(new Func0<Observable<List<DriveFile>>>() {
             @Override
             public Observable<List<DriveFile>> call() {
                 List<DriveFile> list = new LinkedList<>();
 
-                DriveApi.MetadataBufferResult result = Drive.DriveApi.getAppFolder(sClient)
-                        .listChildren(sClient)
+                DriveApi.MetadataBufferResult result = Drive.DriveApi.getAppFolder(mClient)
+                        .listChildren(mClient)
                         .await();
 
                 if (result.getStatus().isSuccess()) {
@@ -158,7 +146,7 @@ public class RxDrive {
      * @param file is the file that will be uploaded
      * @return an Observable with the new DriveFile
      */
-    public static Observable<DriveFile> createFile(final File file) {
+    public Observable<DriveFile> createFile(final File file) {
         return createFile(Uri.fromFile(file));
     }
 
@@ -168,23 +156,23 @@ public class RxDrive {
      * @param uri is the Uri of a file that will be uploaded
      * @return an Observable with the new DriveFile
      */
-    public static Observable<DriveFile> createFile(final Uri uri) {
+    public Observable<DriveFile> createFile(final Uri uri) {
         return Observable.defer(new Func0<Observable<DriveFile>>() {
             @Override
             public Observable<DriveFile> call() {
                 try {
-                    DriveContents driveContents = Drive.DriveApi.newDriveContents(sClient)
+                    DriveContents driveContents = Drive.DriveApi.newDriveContents(mClient)
                             .await()
                             .getDriveContents();
 
-                    ContentResolver contentResolver = sClient.getContext().getContentResolver();
+                    ContentResolver contentResolver = mClient.getContext().getContentResolver();
                     IOUtils.copy(
                             contentResolver.openInputStream(uri),
                             driveContents.getOutputStream());
 
-                    DriveFolder.DriveFileResult result = Drive.DriveApi.getAppFolder(sClient)
+                    DriveFolder.DriveFileResult result = Drive.DriveApi.getAppFolder(mClient)
                             .createFile(
-                                    sClient,
+                                    mClient,
                                     new MetadataChangeSet.Builder()
                                             .setMimeType(contentResolver
                                                     .getType(uri))
@@ -213,11 +201,11 @@ public class RxDrive {
      * @param driveFile the file that will be removed from Drive
      * @return an Observable with `true` if the file is removed
      */
-    public static Observable<Boolean> removeFile(final DriveFile driveFile) {
+    public Observable<Boolean> removeFile(final DriveFile driveFile) {
         return Observable.defer(new Func0<Observable<Boolean>>() {
             @Override
             public Observable<Boolean> call() {
-                Status status = driveFile.delete(sClient).await();
+                Status status = driveFile.delete(mClient).await();
                 if (status.isSuccess()) {
                     return Observable.just(true);
                 } else {
@@ -234,11 +222,11 @@ public class RxDrive {
      * @param driveFile the file you want the Metadata
      * @return the Metadata of the driveFile
      */
-    public static Observable<Metadata> metadata(final DriveFile driveFile) {
+    public Observable<Metadata> metadata(final DriveFile driveFile) {
         return Observable.defer(new Func0<Observable<Metadata>>() {
             @Override
             public Observable<Metadata> call() {
-                DriveResource.MetadataResult result = driveFile.getMetadata(sClient).await();
+                DriveResource.MetadataResult result = driveFile.getMetadata(mClient).await();
                 if (result.getStatus().isSuccess()) {
                     return Observable.just(result.getMetadata());
                 } else {

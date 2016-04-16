@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private CompositeSubscription mSubscriptions = new CompositeSubscription();
     private DriveFileAdapter mAdapter;
+    private RxDrive mRxDrive;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mAdapter = new DriveFileAdapter();
+        mRxDrive = new RxDrive(this);
+
+        mAdapter = new DriveFileAdapter(mRxDrive);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
     }
@@ -64,18 +67,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         setupGoogleApiClientObservable();
-        RxDrive.connect();
+        mRxDrive.connect();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        RxDrive.disconnect();
+        mRxDrive.disconnect();
         mSubscriptions.unsubscribe();
     }
 
     private void setupGoogleApiClientObservable() {
-        Subscription subscription = RxDrive.connection(this)
+        Subscription subscription = mRxDrive.connection()
                 .subscribe(new Action1<ConnectionState>() {
                     @Override
                     public void call(ConnectionState connectionState) {
@@ -86,9 +89,11 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             case SUSPENDED:
                                 mAddPhoto.setEnabled(false);
+                                log(connectionState.getCause().name());
                                 break;
                             case FAILED:
                                 mAddPhoto.setEnabled(false);
+                                log(connectionState.getConnectionResult().getErrorMessage());
                                 resolve(connectionState.getConnectionResult());
                                 break;
                         }
@@ -115,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void listFiles() {
-        RxDrive.listFiles()
+        mRxDrive.listFiles()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<List<DriveFile>>() {
@@ -132,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Subscription createFile(Uri uri) {
-        return RxDrive.createFile(uri)
+        return mRxDrive.createFile(uri)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<DriveFile>() {
@@ -153,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case RESOLVE_CONNECTION_REQUEST_CODE:
                 if (resultCode == RESULT_OK) {
-                    RxDrive.connect();
+                    mRxDrive.connect();
                 }
                 break;
             case PICK_IMAGE_CODE:

@@ -20,6 +20,7 @@ import rx.functions.Action1;
 
 public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.DriveFileViewHolder> {
     private static final String TAG = DriveFileAdapter.class.getName();
+    private RxDrive mRxDrive;
 
     private List<DriveFile> mFiles = new ArrayList<>();
 
@@ -35,10 +36,12 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         }
     }
 
-    public DriveFileAdapter() {
+    public DriveFileAdapter(@NonNull RxDrive rxDrive) {
+        mRxDrive = rxDrive;
     }
 
-    public DriveFileAdapter(@NonNull List<DriveFile> files) {
+    public DriveFileAdapter(@NonNull RxDrive rxDrive, @NonNull List<DriveFile> files) {
+        this(rxDrive);
         mFiles = files;
     }
 
@@ -62,7 +65,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     @Override
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
         final DriveFile driveFile = mFiles.get(position);
-        RxDrive.metadata(driveFile)
+        mRxDrive.metadata(driveFile)
                 .subscribe(new Action1<Metadata>() {
                     @Override
                     public void call(Metadata metadata) {
@@ -78,7 +81,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RxDrive.removeFile(driveFile)
+                mRxDrive.removeFile(driveFile)
                         .subscribe(new Action1<Boolean>() {
                             @Override
                             public void call(Boolean removed) {

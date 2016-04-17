@@ -31,14 +31,14 @@ public class ConnectionState {
         mConnectionResult = connectionResult;
     }
 
-    public static ConnectionState connected(Bundle bundle) {
+    static ConnectionState connected(Bundle bundle) {
         return new Builder()
                 .state(State.CONNECTED)
                 .bundle(bundle)
                 .build();
     }
 
-    public static ConnectionState suspended(int cause) {
+    static ConnectionState suspended(int cause) {
         return new Builder()
                 .state(State.SUSPENDED)
                 .cause(cause == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST ?
@@ -47,37 +47,64 @@ public class ConnectionState {
                 .build();
     }
 
-    public static ConnectionState failed(ConnectionResult result) {
+    static ConnectionState failed(ConnectionResult result) {
         return new Builder()
                 .state(State.FAILED)
                 .result(result)
                 .build();
     }
 
+    /**
+     * @return true if GoogleApiClient is connected
+     */
     public boolean isConnected() {
         return mState == State.CONNECTED;
     }
 
+    /**
+     * @return true if GoogleApiClient connection is suspended
+     */
     public boolean isSuspended() {
         return mState == State.SUSPENDED;
     }
 
+    /**
+     * @return true if connection to GoogleApiClient is failed
+     */
     public boolean isFailed() {
         return mState == State.FAILED;
     }
 
+    /**
+     * This method should be called when state is connected
+     *
+     * @return the Bundle object returned by GoogleApiClient
+     */
     public Bundle getBundle() {
         return mBundle;
     }
 
+    /**
+     * This method should be called when connection is suspended
+     *
+     * @return the cause of the suspension of GoogleApiClient connection
+     */
     public ConnectionSuspendedCause getCause() {
         return mCause;
     }
 
+    /**
+     * This method should be called when connection to GoogleApiClient is failed
+     *
+     * @return the ConnectionResult returned by GoogleApiClient, useful to try to resolve the problem
+     */
     public ConnectionResult getConnectionResult() {
         return mConnectionResult;
     }
 
+    /**
+     * @return the current state of connection to GoogleApiClient
+     */
     public State getState() {
         return mState;
     }

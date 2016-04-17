@@ -16,7 +16,7 @@ import com.francescocervone.rxdrive.ConnectionState;
 import com.francescocervone.rxdrive.RxDrive;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.drive.DriveFile;
+import com.google.android.gms.drive.DriveId;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DriveFileAdapter.OnDriveIdClickListener {
 
     private static final String TAG = MainActivity.class.getName();
     private static final int RESOLVE_CONNECTION_REQUEST_CODE = 1;
@@ -59,20 +59,21 @@ public class MainActivity extends AppCompatActivity {
         mRxDrive = new RxDrive(this);
 
         mAdapter = new DriveFileAdapter(mRxDrive);
+        mAdapter.setDriveIdClickListener(this);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
         setupGoogleApiClientObservable();
         mRxDrive.connect();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         mRxDrive.disconnect();
         mSubscriptions.unsubscribe();
     }
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
                         switch (connectionState.getState()) {
                             case CONNECTED:
                                 mAddPhoto.setEnabled(true);
-                                listFiles();
+                                list();
                                 break;
                             case SUSPENDED:
                                 mAddPhoto.setEnabled(false);
@@ -119,14 +120,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void listFiles() {
-        mRxDrive.listFiles()
+    private void list() {
+        mRxDrive.list()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<DriveFile>>() {
+                .subscribe(new Action1<List<DriveId>>() {
                     @Override
-                    public void call(List<DriveFile> driveFiles) {
-                        mAdapter.setFiles(driveFiles);
+                    public void call(List<DriveId> driveFiles) {
+                        mAdapter.setResources(driveFiles);
                     }
                 }, new Action1<Throwable>() {
                     @Override
@@ -140,10 +141,10 @@ public class MainActivity extends AppCompatActivity {
         return mRxDrive.createFile(uri)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<DriveFile>() {
+                .subscribe(new Action1<DriveId>() {
                     @Override
-                    public void call(DriveFile driveFile) {
-                        mAdapter.addFile(driveFile);
+                    public void call(DriveId driveId) {
+                        mAdapter.addResource(driveId);
                     }
                 }, new Action1<Throwable>() {
                     @Override
@@ -170,10 +171,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void log(Object object) {
-        Log.d(TAG, "log: " + object);
-        Toast.makeText(MainActivity.this, object.toString(), Toast.LENGTH_SHORT).show();
-        if (object instanceof Throwable) {
-            ((Throwable) object).printStackTrace();
+        if (object != null) {
+            Log.d(TAG, "log: " + object);
+            Toast.makeText(MainActivity.this, object.toString(), Toast.LENGTH_SHORT).show();
+            if (object instanceof Throwable) {
+                ((Throwable) object).printStackTrace();
+            }
         }
+    }
+
+    @Override
+    public void onDriveIdClick(DriveId driveId) {
+        Intent intent = new Intent(this, ImageActivity.class);
+        intent.putExtra(ImageActivity.IMAGE_EXTRA, driveId);
+        startActivity(intent);
     }
 }

@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.francescocervone.rxdrive.RxDrive;
-import com.google.android.gms.drive.DriveFile;
+import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.Metadata;
 
 import java.util.ArrayList;
@@ -22,7 +22,9 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     private static final String TAG = DriveFileAdapter.class.getName();
     private RxDrive mRxDrive;
 
-    private List<DriveFile> mFiles = new ArrayList<>();
+    private List<DriveId> mResources = new ArrayList<>();
+
+    private OnDriveIdClickListener mListener;
 
     public static class DriveFileViewHolder extends RecyclerView.ViewHolder {
 
@@ -31,7 +33,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
 
         public DriveFileViewHolder(View itemView) {
             super(itemView);
-            mTextView = (TextView) itemView.findViewById(R.id.text);
+            mTextView = (TextView) itemView.findViewById(R.id.percentage);
             mRemoveButton = (Button) itemView.findViewById(R.id.remove);
         }
     }
@@ -40,19 +42,23 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         mRxDrive = rxDrive;
     }
 
-    public DriveFileAdapter(@NonNull RxDrive rxDrive, @NonNull List<DriveFile> files) {
+    public DriveFileAdapter(@NonNull RxDrive rxDrive, @NonNull List<DriveId> resources) {
         this(rxDrive);
-        mFiles = files;
+        mResources = resources;
     }
 
-    public void setFiles(List<DriveFile> files) {
-        mFiles = files;
-        notifyItemRangeInserted(0, mFiles.size());
+    public void setDriveIdClickListener(OnDriveIdClickListener listener) {
+        mListener = listener;
     }
 
-    public void addFile(DriveFile file) {
-        mFiles.add(file);
-        notifyItemInserted(mFiles.size() - 1);
+    public void setResources(List<DriveId> resources) {
+        mResources = resources;
+        notifyDataSetChanged();
+    }
+
+    public void addResource(DriveId resource) {
+        mResources.add(resource);
+        notifyItemInserted(mResources.size() - 1);
     }
 
     @Override
@@ -64,8 +70,8 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
 
     @Override
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
-        final DriveFile driveFile = mFiles.get(position);
-        mRxDrive.metadata(driveFile)
+        final DriveId driveId = mResources.get(position);
+        mRxDrive.metadata(driveId.asDriveResource())
                 .subscribe(new Action1<Metadata>() {
                     @Override
                     public void call(Metadata metadata) {
@@ -78,15 +84,21 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
                     }
                 });
 
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onDriveIdClick(driveId);
+            }
+        });
         holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRxDrive.removeFile(driveFile)
+                mRxDrive.remove(driveId.asDriveResource())
                         .subscribe(new Action1<Boolean>() {
                             @Override
                             public void call(Boolean removed) {
                                 if (removed) {
-                                    removeFile(holder.getAdapterPosition());
+                                    remove(holder.getAdapterPosition());
                                 }
                             }
                         }, new Action1<Throwable>() {
@@ -99,14 +111,14 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         });
     }
 
-    private void removeFile(int position) {
-        mFiles.remove(position);
+    private void remove(int position) {
+        mResources.remove(position);
         notifyItemRemoved(position);
     }
 
     @Override
     public int getItemCount() {
-        return mFiles.size();
+        return mResources.size();
     }
 
     private void log(Object object) {
@@ -116,4 +128,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         }
     }
 
+    interface OnDriveIdClickListener {
+        void onDriveIdClick(DriveId driveId);
+    }
 }

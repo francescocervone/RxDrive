@@ -71,7 +71,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     @Override
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
         final DriveId driveId = mResources.get(position);
-        mRxDrive.metadata(driveId.asDriveResource())
+        mRxDrive.getMetadata(driveId.asDriveResource())
                 .subscribe(new Action1<Metadata>() {
                     @Override
                     public void call(Metadata metadata) {
@@ -93,7 +93,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRxDrive.remove(driveId.asDriveResource())
+                mRxDrive.delete(driveId.asDriveResource())
                         .subscribe(new Action1<Boolean>() {
                             @Override
                             public void call(Boolean removed) {

@@ -10,7 +10,8 @@ public class ConnectionState {
     public enum State {
         CONNECTED,
         SUSPENDED,
-        FAILED
+        FAILED,
+        UNABLE_TO_RESOLVE
     }
 
     public enum ConnectionSuspendedCause {
@@ -54,6 +55,13 @@ public class ConnectionState {
                 .build();
     }
 
+    static ConnectionState unableToResolve(ConnectionResult result) {
+        return new Builder()
+                .state(State.UNABLE_TO_RESOLVE)
+                .result(result)
+                .build();
+    }
+
     /**
      * @return true if GoogleApiClient is connected
      */
@@ -73,6 +81,14 @@ public class ConnectionState {
      */
     public boolean isFailed() {
         return mState == State.FAILED;
+    }
+
+    /**
+     * @return true if startResolutionForResult failed
+     * @see com.google.android.gms.common.ConnectionResult#startResolutionForResult
+     */
+    public boolean isUnableToResolve() {
+        return mState == State.UNABLE_TO_RESOLVE;
     }
 
     /**

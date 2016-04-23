@@ -13,6 +13,8 @@ import com.bumptech.glide.request.target.Target;
 import com.francescocervone.rxdrive.ConnectionState;
 import com.francescocervone.rxdrive.Progress;
 import com.francescocervone.rxdrive.RxDrive;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveId;
 
 import org.apache.commons.io.IOUtils;
@@ -51,7 +53,7 @@ public class ImageActivity extends AppCompatActivity {
         mImageView = (ImageView) findViewById(R.id.image);
         mAttacher = new PhotoViewAttacher(mImageView, true);
 
-        mRxDrive = new RxDrive(this);
+        mRxDrive = new RxDrive(new GoogleApiClient.Builder(this).addScope(Drive.SCOPE_APPFOLDER));
     }
 
     @Override
@@ -69,7 +71,7 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     private void setupConnection() {
-        Subscription subscription = mRxDrive.connection()
+        Subscription subscription = mRxDrive.connectionObservable()
                 .subscribe(new Action1<ConnectionState>() {
                     @Override
                     public void call(ConnectionState connectionState) {

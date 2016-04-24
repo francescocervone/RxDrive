@@ -1,4 +1,6 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxDrive-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3479)
+[![](https://jitpack.io/v/francescocervone/rxdrive.svg)](https://jitpack.io/#francescocervone/rxdrive)
+
 
 # RxDrive
 RxJava wrapper for Google Drive Android API
@@ -61,8 +63,6 @@ public class MyActivity extends AppCompatActivity {
 ### Creating a file
 ```
 mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMimeType)
-    .subscribeOn(Schedulers.io())
-    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<DriveId>() {
         @Override
         public void call(DriveId driveId) { ... }
@@ -75,8 +75,6 @@ mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMi
 ### Listing children of a folder
 ```
 mRxDrive.listChildren(mRxDrive.getAppFolder())
-    .subscribeOn(Schedulers.io())
-    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<List<DriveId>>() {
         @Override
         public void call(List<DriveId> driveIds) { ... }
@@ -91,8 +89,6 @@ Query query = new Query.Builder()
 	.addFilter(Filters.eq(SearchableField.TITLE, "HelloWorld.java"))
 	.build()
 mRxDrive.queryChildren(mRxDrive.getAppFolder(), query)
-    .subscribeOn(Schedulers.io())
-    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<List<DriveId>>() {
         @Override
         public void call(List<DriveId> driveIds) { ... }
@@ -105,8 +101,6 @@ mRxDrive.queryChildren(mRxDrive.getAppFolder(), query)
 ### Getting metadata
 ```
 mRxDrive.getMetadata(someDriveId)
-    .subscribeOn(Schedulers.io())
-	.observeOn(AndroidSchedulers.mainThread())
 	.subscribe(new Action1<Metadata>() {
 	    @Override
             public void call(Metadata metadata) { ... }
@@ -118,29 +112,25 @@ mRxDrive.getMetadata(someDriveId)
 
 ### Opening a file
 ```
-mRxDrive.open(
-	mDriveId,
-	new Subscriber<Progress>() {
+mRxDrive.open(mDriveId, new Subscriber<Progress>() {
         @Override
         public void onCompleted() { ... }
-
+    
         @Override
         public void onError(Throwable e) { ... }
-
+    
         @Override
         public void onNext(Progress progress) {
             mTextView.setText(progress.getPercentage() + "%");
         }
     })
-    .subscribeOn(Schedulers.io())
-	.observeOn(AndroidSchedulers.mainThread())
-	.subscribe(new Action1<InputStream>() {
-		@Override
-		public void call(InputStream inputStream) { ... }
-	}, new Action1<Throwable>() {
-		@Override
-		public void call(Throwable throwable) { ... }
-	});
+    .subscribe(new Action1<InputStream>() {
+    	@Override
+    	public void call(InputStream inputStream) { ... }
+    }, new Action1<Throwable>() {
+    	@Override
+    	public void call(Throwable throwable) { ... }
+    });
 ```
 ## Gradle
 Add in your root `build.gradle` at the end of repositories:
@@ -157,6 +147,6 @@ Add in your app `build.gradle` the dependency:
 ```
 dependencies {
   ...
-  compile 'com.github.francescocervone:rxdrive:master-SNAPSHOT'
+  compile 'com.github.francescocervone:rxdrive:0.1'
 }
 ```

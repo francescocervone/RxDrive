@@ -1,3 +1,5 @@
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxDrive-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3479)
+
 # RxDrive
 RxJava wrapper for Google Drive Android API
 

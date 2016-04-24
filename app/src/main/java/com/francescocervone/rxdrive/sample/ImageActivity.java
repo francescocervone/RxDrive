@@ -24,6 +24,7 @@ import java.io.InputStream;
 
 import rx.Subscriber;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 import uk.co.senab.photoview.PhotoViewAttacher;
@@ -77,6 +78,7 @@ public class ImageActivity extends AppCompatActivity {
                     public void call(ConnectionState connectionState) {
                         if (connectionState.isConnected()) {
                             Subscription subscription = mRxDrive.open(mDriveId, getProgressSubscriber())
+                                    .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(new Action1<InputStream>() {
                                         @Override
                                         public void call(InputStream inputStream) {

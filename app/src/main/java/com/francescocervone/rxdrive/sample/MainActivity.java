@@ -22,7 +22,6 @@ import java.util.List;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainActivity extends AppCompatActivity implements DriveFileAdapter.OnDriveIdClickListener {
@@ -112,7 +111,6 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
 
     private void list() {
         mRxDrive.listChildren(mRxDrive.getAppFolder())
-                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<List<DriveId>>() {
                     @Override
@@ -129,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
 
     private Subscription createFile(Uri uri) {
         return mRxDrive.createFile(mRxDrive.getAppFolder(), uri)
-                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<DriveId>() {
                     @Override

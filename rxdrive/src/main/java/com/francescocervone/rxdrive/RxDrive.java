@@ -40,9 +40,7 @@ import java.util.Set;
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func0;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
@@ -143,21 +141,19 @@ public class RxDrive {
      * @param s the string of the driveId
      * @return an Observable with the driveId if exists
      */
-    public Observable<DriveId> fetchDriveId(String s) {
-        return Observable.just(s)
-                .flatMap(new Func1<String, Observable<DriveId>>() {
-                    @Override
-                    public Observable<DriveId> call(String s) {
-                        DriveApi.DriveIdResult driveIdResult = Drive.DriveApi.fetchDriveId(mClient, s)
-                                .await();
-                        if (driveIdResult.getStatus().isSuccess()) {
-                            return Observable.just(driveIdResult.getDriveId());
-                        } else {
-                            return Observable.error(new RxDriveException(driveIdResult.getStatus()));
-                        }
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Observable<DriveId> fetchDriveId(final String s) {
+        return Observable.defer(new Func0<Observable<DriveId>>() {
+            @Override
+            public Observable<DriveId> call() {
+                DriveApi.DriveIdResult driveIdResult = Drive.DriveApi.fetchDriveId(mClient, s)
+                        .await();
+                if (driveIdResult.getStatus().isSuccess()) {
+                    return Observable.just(driveIdResult.getDriveId());
+                } else {
+                    return Observable.error(new RxDriveException(driveIdResult.getStatus()));
+                }
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -165,10 +161,10 @@ public class RxDrive {
      *
      * @return an Observable with the list of the resources
      */
-    public Observable<List<DriveId>> listChildren(DriveFolder driveFolder) {
-        return Observable.just(driveFolder).flatMap(new Func1<DriveFolder, Observable<List<DriveId>>>() {
+    public Observable<List<DriveId>> listChildren(final DriveFolder driveFolder) {
+        return Observable.defer(new Func0<Observable<List<DriveId>>>() {
             @Override
-            public Observable<List<DriveId>> call(DriveFolder driveFolder) {
+            public Observable<List<DriveId>> call() {
                 List<DriveId> list = new ArrayList<>();
 
                 DriveApi.MetadataBufferResult result = driveFolder.listChildren(mClient).await();
@@ -186,8 +182,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
 
@@ -197,10 +192,10 @@ public class RxDrive {
      * @param driveResource
      * @return the list of the parents
      */
-    public Observable<List<DriveId>> listParents(DriveResource driveResource) {
-        return Observable.just(driveResource).flatMap(new Func1<DriveResource, Observable<List<DriveId>>>() {
+    public Observable<List<DriveId>> listParents(final DriveResource driveResource) {
+        return Observable.defer(new Func0<Observable<List<DriveId>>>() {
             @Override
-            public Observable<List<DriveId>> call(DriveResource driveResource) {
+            public Observable<List<DriveId>> call() {
                 List<DriveId> list = new ArrayList<>();
 
                 DriveApi.MetadataBufferResult result = driveResource.listParents(mClient).await();
@@ -218,8 +213,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
 
@@ -241,7 +235,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        });
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -250,32 +244,30 @@ public class RxDrive {
      * @param query the query you want to submit
      * @return
      */
-    public Observable<List<DriveId>> query(Query query) {
-        return Observable.just(query)
-                .flatMap(new Func1<Query, Observable<List<DriveId>>>() {
-                    @Override
-                    public Observable<List<DriveId>> call(Query query) {
-                        List<DriveId> list = new ArrayList<>();
+    public Observable<List<DriveId>> query(final Query query) {
+        return Observable.defer(new Func0<Observable<List<DriveId>>>() {
+            @Override
+            public Observable<List<DriveId>> call() {
+                List<DriveId> list = new ArrayList<>();
 
-                        DriveApi.MetadataBufferResult result = Drive.DriveApi
-                                .query(mClient, query)
-                                .await();
+                DriveApi.MetadataBufferResult result = Drive.DriveApi
+                        .query(mClient, query)
+                        .await();
 
-                        if (result.getStatus().isSuccess()) {
-                            MetadataBuffer buffer = result.getMetadataBuffer();
+                if (result.getStatus().isSuccess()) {
+                    MetadataBuffer buffer = result.getMetadataBuffer();
 
-                            for (Metadata metadata : buffer) {
-                                list.add(metadata.getDriveId());
-                            }
-
-                            buffer.release();
-                            return Observable.just(list);
-                        } else {
-                            return Observable.error(new RxDriveException(result.getStatus()));
-                        }
+                    for (Metadata metadata : buffer) {
+                        list.add(metadata.getDriveId());
                     }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+
+                    buffer.release();
+                    return Observable.just(list);
+                } else {
+                    return Observable.error(new RxDriveException(result.getStatus()));
+                }
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -306,8 +298,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -462,8 +453,7 @@ public class RxDrive {
                     return Observable.error(e);
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -490,8 +480,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
 
     }
 
@@ -512,8 +501,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -522,20 +510,18 @@ public class RxDrive {
      * @param driveResource the resource to put in the trash
      * @return true if the operation succeeds
      */
-    public Observable<Boolean> trash(DriveResource driveResource) {
-        return Observable.just(driveResource)
-                .flatMap(new Func1<DriveResource, Observable<Boolean>>() {
-                    @Override
-                    public Observable<Boolean> call(DriveResource driveResource) {
-                        Status status = driveResource.trash(mClient).await();
-                        if (status.isSuccess()) {
-                            return Observable.just(true);
-                        } else {
-                            return Observable.error(new RxDriveException(status));
-                        }
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Observable<Boolean> trash(final DriveResource driveResource) {
+        return Observable.defer(new Func0<Observable<Boolean>>() {
+            @Override
+            public Observable<Boolean> call() {
+                Status status = driveResource.trash(mClient).await();
+                if (status.isSuccess()) {
+                    return Observable.just(true);
+                } else {
+                    return Observable.error(new RxDriveException(status));
+                }
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -544,20 +530,18 @@ public class RxDrive {
      * @param driveResource the resource to remove from the trash
      * @return true if the operation succeeds
      */
-    public Observable<Boolean> untrash(DriveResource driveResource) {
-        return Observable.just(driveResource)
-                .flatMap(new Func1<DriveResource, Observable<Boolean>>() {
-                    @Override
-                    public Observable<Boolean> call(DriveResource driveResource) {
-                        Status status = driveResource.untrash(mClient).await();
-                        if (status.isSuccess()) {
-                            return Observable.just(true);
-                        } else {
-                            return Observable.error(new RxDriveException(status));
-                        }
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Observable<Boolean> untrash(final DriveResource driveResource) {
+        return Observable.defer(new Func0<Observable<Boolean>>() {
+            @Override
+            public Observable<Boolean> call() {
+                Status status = driveResource.untrash(mClient).await();
+                if (status.isSuccess()) {
+                    return Observable.just(true);
+                } else {
+                    return Observable.error(new RxDriveException(status));
+                }
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     /**
@@ -577,8 +561,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
 
@@ -627,8 +610,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        }).subscribeOn(Schedulers.io());
     }
 
     /**

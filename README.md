@@ -5,9 +5,29 @@
 # RxDrive
 RxJava wrapper for Google Drive Android API
 
-## Usage
+## Why
+Using Google Drive API for Android can be a little frustrating because sometimes you must define nested callbacks. If you want to avoid them, you should create an `AsyncTask` for each action and call synchronous methods (`await()`). Anyway, you have to write some ugly and confusing code.
+
+The purpose of RxDrive is to use Google Drive APIs with the elegance and the advantages of RxJava.
+
+No more nested callbacks, no more `AsyncTasks`.
+
+## Before you start
+Before you start using this library, you need to follow the instructions to create a new project with Google Drive API access (https://developers.google.com/drive/android/get-started).
+
+## Features
+Since this project is still a work in progress, additional features will come in next releases. Currently, RxDrive allows you to:
+* Authenticate users
+* Notify your app about changes of the connection state
+* Create files
+* Open files
+* Get metadata of Drive resources
+* List and query resources
+* Trash, untrash and delete Drive resources
+
+## Examples
 ### Connecting
-```
+```java
 public class MyActivity extends AppCompatActivity {
     private RxDrive mRxDrive;
     private Subscription mSubscription;
@@ -50,7 +70,7 @@ public class MyActivity extends AppCompatActivity {
     protected void onStop() {
         ...
         mRxDrive.disconnect();
-        mSubscriptions.unsubscribe();
+        mSubscription.unsubscribe();
     }
     
     @Override
@@ -61,7 +81,7 @@ public class MyActivity extends AppCompatActivity {
 ```
 
 ### Creating a file
-```
+```java
 mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMimeType)
     .subscribe(new Action1<DriveId>() {
         @Override
@@ -73,7 +93,7 @@ mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMi
 ```
 
 ### Listing children of a folder
-```
+```java
 mRxDrive.listChildren(mRxDrive.getAppFolder())
     .subscribe(new Action1<List<DriveId>>() {
         @Override
@@ -84,7 +104,7 @@ mRxDrive.listChildren(mRxDrive.getAppFolder())
     });
 ```
 ### Querying for children of a folder
-```
+```java
 Query query = new Query.Builder()
 	.addFilter(Filters.eq(SearchableField.TITLE, "HelloWorld.java"))
 	.build()
@@ -99,19 +119,19 @@ mRxDrive.queryChildren(mRxDrive.getAppFolder(), query)
 ```
 
 ### Getting metadata
-```
+```java
 mRxDrive.getMetadata(someDriveId)
 	.subscribe(new Action1<Metadata>() {
 	    @Override
-            public void call(Metadata metadata) { ... }
+        public void call(Metadata metadata) { ... }
 	}, new Action1<Throwable>() {
 	    @Override
-            public void call(Throwable throwable) { ... }
+        public void call(Throwable throwable) { ... }
 	}
 ```
 
 ### Opening a file
-```
+```java
 mRxDrive.open(mDriveId, new Subscriber<Progress>() {
         @Override
         public void onCompleted() { ... }
@@ -134,14 +154,14 @@ mRxDrive.open(mDriveId, new Subscriber<Progress>() {
 ```
 ## Gradle
 Add in your root `build.gradle`:
-```
+```gradle
 repositories {
 	jcenter()
 }
 ```
 
 Add in your app `build.gradle` the dependency:
-```
+```gradle
 dependencies {
   ...
   compile 'com.francescocervone:rxdrive:0.1'

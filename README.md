@@ -1,5 +1,5 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxDrive-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3479)
-[![](https://jitpack.io/v/francescocervone/rxdrive.svg)](https://jitpack.io/#francescocervone/rxdrive)
+[ ![Download](https://api.bintray.com/packages/francescocervone/maven/rxdrive/images/download.svg) ](https://bintray.com/francescocervone/maven/rxdrive/_latestVersion)
 
 
 # RxDrive
@@ -133,13 +133,10 @@ mRxDrive.open(mDriveId, new Subscriber<Progress>() {
     });
 ```
 ## Gradle
-Add in your root `build.gradle` at the end of repositories:
+Add in your root `build.gradle`:
 ```
-allprojects {
-	repositories {
-		...
-		maven { url "https://jitpack.io" }
-	}
+repositories {
+	jcenter()
 }
 ```
 
@@ -147,6 +144,6 @@ Add in your app `build.gradle` the dependency:
 ```
 dependencies {
   ...
-  compile 'com.github.francescocervone:rxdrive:0.1'
+  compile 'com.francescocervone:rxdrive:0.1'
 }
 ```

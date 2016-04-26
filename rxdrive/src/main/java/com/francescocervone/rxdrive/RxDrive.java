@@ -82,10 +82,17 @@ public class RxDrive {
     }
 
     /**
+     * This constructor will create an instance of GoogleApiClient with user files permissions.
+     * If you want to create an instance with app folder permissions or with other Play Services
+     * APIs, then you should use {@link RxDrive#RxDrive(GoogleApiClient.Builder)}
+     *
      * @param context is necessary to create a new GoogleApiClient
+     * @see RxDrive#RxDrive(GoogleApiClient.Builder)
+     * @see com.google.android.gms.drive.Drive#SCOPE_FILE
+     * @see com.google.android.gms.drive.Drive#SCOPE_APPFOLDER
      */
     public RxDrive(Context context) {
-        this(new GoogleApiClient.Builder(context));
+        this(new GoogleApiClient.Builder(context).addScope(Drive.SCOPE_FILE));
     }
 
 

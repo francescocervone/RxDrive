@@ -34,7 +34,11 @@ public class MyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
     	...
-    	mRxDrive = new RxDrive(this);
+    	mRxDrive = new RxDrive(new GoogleApiClient.Builder(this)
+    		.addApi(Drive.API)
+    		.addScope(Drive.SCOPE_FILE) //If you want to access to user files
+    		.addScope(Drive.SCOPE_APPFOLDER) //If you want to access to the app folder
+    	);
     }
     	
     @Override

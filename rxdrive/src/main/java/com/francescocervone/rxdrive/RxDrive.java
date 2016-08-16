@@ -462,37 +462,6 @@ public class RxDrive {
             }
         }).subscribeOn(Schedulers.io());
     }
-    
-    /**
-     * Updates a file on Drive
-     *
-     * @param driveFile drive file
-     * @param content the content to write
-     * @return an Observable with the DriveId
-     */
-    public Observable<DriveFile> updateFile(final DriveFile driveFile, final ByteArrayInputStream content) {
-        return Observable.defer(new Func0<Observable<DriveFile>>() {
-            @Override
-            public Observable<DriveFile> call() {
-                DriveApi.DriveContentsResult driveContentsResult = driveFile
-                        .open(getGoogleApiClient(), DriveFile.MODE_WRITE_ONLY, null)
-                        .await();
-                DriveContents driveContents = driveContentsResult.getDriveContents();
-                try {
-                    IOUtils.copy(content, driveContents.getOutputStream());
-                    Status status = driveContents.commit(getGoogleApiClient(), null).await();
-                    if (status.isSuccess()) {
-                        return Observable.just(driveFile);
-                    } else {
-                        return Observable.error(new RxDriveException(status));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return Observable.error(e);
-                }
-            }
-        });
-    }
 
     /**
      * Creates a new folder
@@ -578,21 +547,6 @@ public class RxDrive {
                 } else {
                     return Observable.error(new RxDriveException(status));
                 }
-            }
-        }).subscribeOn(Schedulers.io());
-    }
-    
-    /**
-     * Do sync
-     *
-     * @return nothing
-     */
-    public Observable<Void> sync() {
-        return Observable.defer(new Func0<Observable<Void>>() {
-            @Override
-            public Observable<Void> call() {
-                Drive.DriveApi.requestSync(mClient).await();
-                return Observable.just(null);
             }
         }).subscribeOn(Schedulers.io());
     }

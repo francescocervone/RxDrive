@@ -1,5 +1,6 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxDrive-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3479)
 [ ![Download](https://api.bintray.com/packages/francescocervone/maven/rxdrive/images/download.svg) ](https://bintray.com/francescocervone/maven/rxdrive/_latestVersion)
+[![Build Status](https://travis-ci.org/francescocervone/RxDrive.svg?branch=develop)](https://travis-ci.org/francescocervone/RxDrive)
 
 
 # RxDrive

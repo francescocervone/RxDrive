@@ -462,25 +462,51 @@ public class RxDrive {
             }
         }).subscribeOn(Schedulers.io());
     }
-    
+
     /**
      * Updates a file on Drive
      *
      * @param driveFile drive file
-     * @param content the content to write
+     * @param file      the content to write
+     * @return an Observable with the new DriveId
+     */
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, File file) {
+        return updateFile(driveFile, Uri.fromFile(file));
+    }
+
+    /**
+     * Updates a file on Drive
+     *
+     * @param driveFile drive file
+     * @param uri       the content to write
+     * @return an Observable with the new DriveId
+     */
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, Uri uri) {
+        try {
+            return updateFile(driveFile, getContentResolver().openInputStream(uri));
+        } catch (FileNotFoundException e) {
+            return Observable.error(e);
+        }
+    }
+
+    /**
+     * Updates a file on Drive
+     *
+     * @param driveFile drive file
+     * @param content   the content to write
      * @return an Observable with the DriveId
      */
-    public Observable<DriveFile> updateFile(final DriveFile driveFile, final ByteArrayInputStream content) {
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, final InputStream content) {
         return Observable.defer(new Func0<Observable<DriveFile>>() {
             @Override
             public Observable<DriveFile> call() {
                 DriveApi.DriveContentsResult driveContentsResult = driveFile
-                        .open(getGoogleApiClient(), DriveFile.MODE_WRITE_ONLY, null)
+                        .open(mClient, DriveFile.MODE_WRITE_ONLY, null)
                         .await();
                 DriveContents driveContents = driveContentsResult.getDriveContents();
                 try {
                     IOUtils.copy(content, driveContents.getOutputStream());
-                    Status status = driveContents.commit(getGoogleApiClient(), null).await();
+                    Status status = driveContents.commit(mClient, null).await();
                     if (status.isSuccess()) {
                         return Observable.just(driveFile);
                     } else {
@@ -581,7 +607,7 @@ public class RxDrive {
             }
         }).subscribeOn(Schedulers.io());
     }
-    
+
     /**
      * Do sync
      *

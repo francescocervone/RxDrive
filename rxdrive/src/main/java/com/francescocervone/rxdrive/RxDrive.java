@@ -470,8 +470,8 @@ public class RxDrive {
      * @param file      the content to write
      * @return an Observable with the new DriveId
      */
-    public Observable<DriveFile> updateFile(final DriveFile driveFile, File file) {
-        return updateFile(driveFile, Uri.fromFile(file));
+    public Observable<DriveFile> updateFileContent(final DriveFile driveFile, File file) {
+        return updateFileContent(driveFile, Uri.fromFile(file));
     }
 
     /**
@@ -481,9 +481,9 @@ public class RxDrive {
      * @param uri       the content to write
      * @return an Observable with the new DriveId
      */
-    public Observable<DriveFile> updateFile(final DriveFile driveFile, Uri uri) {
+    public Observable<DriveFile> updateFileContent(final DriveFile driveFile, Uri uri) {
         try {
-            return updateFile(driveFile, getContentResolver().openInputStream(uri));
+            return updateFileContent(driveFile, getContentResolver().openInputStream(uri));
         } catch (FileNotFoundException e) {
             return Observable.error(e);
         }
@@ -496,7 +496,7 @@ public class RxDrive {
      * @param content   the content to write
      * @return an Observable with the DriveId
      */
-    public Observable<DriveFile> updateFile(final DriveFile driveFile, final InputStream content) {
+    public Observable<DriveFile> updateFileContent(final DriveFile driveFile, final InputStream content) {
         return Observable.defer(new Func0<Observable<DriveFile>>() {
             @Override
             public Observable<DriveFile> call() {

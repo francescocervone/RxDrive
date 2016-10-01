@@ -41,7 +41,6 @@ import java.util.Set;
 import rx.Observable;
 import rx.Subscriber;
 import rx.functions.Func0;
-import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 public class RxDrive {
@@ -160,7 +159,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(driveIdResult.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -189,7 +188,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
 
@@ -220,7 +219,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
 
@@ -242,7 +241,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -274,7 +273,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -305,7 +304,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -460,7 +459,7 @@ public class RxDrive {
                     return Observable.error(e);
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -544,7 +543,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
 
     }
 
@@ -565,7 +564,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -585,7 +584,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -605,7 +604,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(status));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -620,7 +619,7 @@ public class RxDrive {
                 Drive.DriveApi.requestSync(mClient).await();
                 return Observable.just(null);
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**
@@ -640,7 +639,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
 
@@ -689,7 +688,7 @@ public class RxDrive {
                     return Observable.error(new RxDriveException(result.getStatus()));
                 }
             }
-        }).subscribeOn(Schedulers.io());
+        });
     }
 
     /**

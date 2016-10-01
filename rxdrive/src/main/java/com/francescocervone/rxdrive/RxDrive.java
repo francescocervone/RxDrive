@@ -464,6 +464,63 @@ public class RxDrive {
     }
 
     /**
+     * Updates a file on Drive
+     *
+     * @param driveFile drive file
+     * @param file      the content to write
+     * @return an Observable with the new DriveId
+     */
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, File file) {
+        return updateFile(driveFile, Uri.fromFile(file));
+    }
+
+    /**
+     * Updates a file on Drive
+     *
+     * @param driveFile drive file
+     * @param uri       the content to write
+     * @return an Observable with the new DriveId
+     */
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, Uri uri) {
+        try {
+            return updateFile(driveFile, getContentResolver().openInputStream(uri));
+        } catch (FileNotFoundException e) {
+            return Observable.error(e);
+        }
+    }
+
+    /**
+     * Updates a file on Drive
+     *
+     * @param driveFile drive file
+     * @param content   the content to write
+     * @return an Observable with the DriveId
+     */
+    public Observable<DriveFile> updateFile(final DriveFile driveFile, final InputStream content) {
+        return Observable.defer(new Func0<Observable<DriveFile>>() {
+            @Override
+            public Observable<DriveFile> call() {
+                DriveApi.DriveContentsResult driveContentsResult = driveFile
+                        .open(mClient, DriveFile.MODE_WRITE_ONLY, null)
+                        .await();
+                DriveContents driveContents = driveContentsResult.getDriveContents();
+                try {
+                    IOUtils.copy(content, driveContents.getOutputStream());
+                    Status status = driveContents.commit(mClient, null).await();
+                    if (status.isSuccess()) {
+                        return Observable.just(driveFile);
+                    } else {
+                        return Observable.error(new RxDriveException(status));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return Observable.error(e);
+                }
+            }
+        });
+    }
+
+    /**
      * Creates a new folder
      *
      * @param folder where to create the new folder
@@ -547,6 +604,21 @@ public class RxDrive {
                 } else {
                     return Observable.error(new RxDriveException(status));
                 }
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    /**
+     * Do sync
+     *
+     * @return nothing
+     */
+    public Observable<Void> sync() {
+        return Observable.defer(new Func0<Observable<Void>>() {
+            @Override
+            public Observable<Void> call() {
+                Drive.DriveApi.requestSync(mClient).await();
+                return Observable.just(null);
             }
         }).subscribeOn(Schedulers.io());
     }

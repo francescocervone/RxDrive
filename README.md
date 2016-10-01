@@ -22,9 +22,11 @@ Since this project is still a work in progress, additional features will come in
 * Notify your app about changes of the connection state
 * Create files
 * Open files
+* Update files
 * Get metadata of Drive resources
 * List and query resources
 * Trash, untrash and delete Drive resources
+* Sync Drive
 
 ## Examples
 ### Connecting

@@ -28,8 +28,6 @@ import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Query;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;

@@ -55,7 +55,6 @@ if (JavaVersion.current().isJava8Compatible()) {
 
 dependencies {
     compile 'io.reactivex:rxjava:1.2.10'
-    compile 'commons-io:commons-io:2.4'
     compile 'com.google.android.gms:play-services-drive:10.2.4'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'

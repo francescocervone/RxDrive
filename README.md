@@ -90,6 +90,8 @@ public class MyActivity extends AppCompatActivity {
 ### Creating a file
 ```java
 mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMimeType)
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<DriveId>() {
         @Override
         public void call(DriveId driveId) { ... }
@@ -102,6 +104,8 @@ mRxDrive.createFile(mRxDrive.getAppFolder(), uriOrFile, optionalName, optionalMi
 ### Listing children of a folder
 ```java
 mRxDrive.listChildren(mRxDrive.getAppFolder())
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<List<DriveId>>() {
         @Override
         public void call(List<DriveId> driveIds) { ... }
@@ -116,6 +120,8 @@ Query query = new Query.Builder()
 	.addFilter(Filters.eq(SearchableField.TITLE, "HelloWorld.java"))
 	.build()
 mRxDrive.queryChildren(mRxDrive.getAppFolder(), query)
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<List<DriveId>>() {
         @Override
         public void call(List<DriveId> driveIds) { ... }
@@ -128,11 +134,13 @@ mRxDrive.queryChildren(mRxDrive.getAppFolder(), query)
 ### Getting metadata
 ```java
 mRxDrive.getMetadata(someDriveId)
-	.subscribe(new Action1<Metadata>() {
-	    @Override
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
+    .subscribe(new Action1<Metadata>() {
+	@Override
         public void call(Metadata metadata) { ... }
 	}, new Action1<Throwable>() {
-	    @Override
+	@Override
         public void call(Throwable throwable) { ... }
 	}
 ```
@@ -151,6 +159,8 @@ mRxDrive.open(mDriveId, new Subscriber<Progress>() {
             mTextView.setText(progress.getPercentage() + "%");
         }
     })
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
     .subscribe(new Action1<InputStream>() {
     	@Override
     	public void call(InputStream inputStream) { ... }

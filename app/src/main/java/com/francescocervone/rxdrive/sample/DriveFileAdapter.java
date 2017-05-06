@@ -25,7 +25,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     private static final String TAG = DriveFileAdapter.class.getName();
     private RxDrive mRxDrive;
 
-    private List<DriveId> mResources = new ArrayList<>();
+    private List<Metadata> mResources = new ArrayList<>();
 
     private OnDriveIdClickListener mListener;
 
@@ -45,7 +45,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         mRxDrive = rxDrive;
     }
 
-    public DriveFileAdapter(@NonNull RxDrive rxDrive, @NonNull List<DriveId> resources) {
+    public DriveFileAdapter(@NonNull RxDrive rxDrive, @NonNull List<Metadata> resources) {
         this(rxDrive);
         mResources = resources;
     }
@@ -54,12 +54,12 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
         mListener = listener;
     }
 
-    public void setResources(List<DriveId> resources) {
+    public void setResources(List<Metadata> resources) {
         mResources = resources;
         notifyDataSetChanged();
     }
 
-    public void addResource(DriveId resource) {
+    public void addResource(Metadata resource) {
         mResources.add(resource);
         notifyItemInserted(mResources.size() - 1);
     }
@@ -73,32 +73,18 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
 
     @Override
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
-        final DriveId driveId = mResources.get(position);
-        mRxDrive.getMetadata(driveId.asDriveResource())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Metadata>() {
-                    @Override
-                    public void call(Metadata metadata) {
-                        holder.mTextView.setText(metadata.getTitle());
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        log(throwable);
-                    }
-                });
-
+        final Metadata metadata = mResources.get(position);
+        holder.mTextView.setText(metadata.getTitle());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onDriveIdClick(driveId);
+                mListener.onDriveIdClick(metadata.getDriveId());
             }
         });
         holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRxDrive.delete(driveId.asDriveResource())
+                mRxDrive.delete(metadata.getDriveId().asDriveResource())
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Action0() {

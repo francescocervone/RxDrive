@@ -16,12 +16,16 @@ import com.francescocervone.rxdrive.RxDrive;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.Metadata;
 
 import java.util.List;
 
+import rx.Observable;
+import rx.Single;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -115,10 +119,24 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
     private void list() {
         mRxDrive.listChildren(mRxDrive.getAppFolder())
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<DriveId>>() {
+                .flatMapObservable(new Func1<List<DriveId>, Observable<DriveId>>() {
                     @Override
-                    public void call(List<DriveId> driveFiles) {
+                    public Observable<DriveId> call(List<DriveId> driveIds) {
+                        return Observable.from(driveIds);
+                    }
+                })
+                .flatMap(new Func1<DriveId, Observable<Metadata>>() {
+                    @Override
+                    public Observable<Metadata> call(DriveId driveId) {
+                        return mRxDrive.getMetadata(driveId.asDriveResource()).toObservable();
+                    }
+                })
+                .toList()
+                .toSingle()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<List<Metadata>>() {
+                    @Override
+                    public void call(List<Metadata> driveFiles) {
                         mAdapter.setResources(driveFiles);
                     }
                 }, new Action1<Throwable>() {
@@ -132,11 +150,17 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
     private Subscription createFile(Uri uri) {
         return mRxDrive.createFile(mRxDrive.getAppFolder(), uri)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<DriveId>() {
+                .flatMap(new Func1<DriveId, Single<Metadata>>() {
                     @Override
-                    public void call(DriveId driveId) {
-                        mAdapter.addResource(driveId);
+                    public Single<Metadata> call(DriveId driveId) {
+                        return mRxDrive.getMetadata(driveId.asDriveResource());
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Metadata>() {
+                    @Override
+                    public void call(Metadata metadata) {
+                        mAdapter.addResource(metadata);
                     }
                 }, new Action1<Throwable>() {
                     @Override

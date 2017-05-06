@@ -18,6 +18,7 @@ import java.util.List;
 
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.DriveFileViewHolder> {
     private static final String TAG = DriveFileAdapter.class.getName();
@@ -73,6 +74,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
         final DriveId driveId = mResources.get(position);
         mRxDrive.getMetadata(driveId.asDriveResource())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Metadata>() {
                     @Override
@@ -96,6 +98,7 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
             @Override
             public void onClick(View v) {
                 mRxDrive.delete(driveId.asDriveResource())
+                        .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Action1<Boolean>() {
                             @Override

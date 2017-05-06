@@ -17,7 +17,7 @@ android:
 before_script:
    - echo "sdk.dir=$ANDROID_HOME" > local.properties
 script:
-   - ./gradlew check --info --stacktrace
+   - ./gradlew check
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

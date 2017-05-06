@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
@@ -100,12 +101,10 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
                 mRxDrive.delete(driveId.asDriveResource())
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action1<Boolean>() {
+                        .subscribe(new Action0() {
                             @Override
-                            public void call(Boolean removed) {
-                                if (removed) {
-                                    remove(holder.getAdapterPosition());
-                                }
+                            public void call() {
+                                remove(holder.getAdapterPosition());
                             }
                         }, new Action1<Throwable>() {
                             @Override

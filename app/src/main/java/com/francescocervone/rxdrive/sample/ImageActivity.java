@@ -22,7 +22,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-import rx.Observable;
+import rx.Single;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -83,9 +83,9 @@ public class ImageActivity extends AppCompatActivity {
                         return connectionState.isConnected();
                     }
                 })
-                .flatMap(new Func1<ConnectionState, Observable<InputStream>>() {
+                .flatMapSingle(new Func1<ConnectionState, Single<InputStream>>() {
                     @Override
-                    public Observable<InputStream> call(ConnectionState connectionState) {
+                    public Single<InputStream> call(ConnectionState connectionState) {
                         return mRxDrive.open(mDriveId, getProgressSubscriber());
                     }
                 })

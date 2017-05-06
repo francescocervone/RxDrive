@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/francescocervone/RxDrive'
     gitUrl = 'https://github.com/francescocervone/RxDrive.git'
 
-    libraryVersion = '0.1.1'
+    libraryVersion = '0.2'
 
     developerId = 'francescocervone'
     developerName = 'Francesco Cervone'
@@ -31,8 +31,8 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdk
         targetSdkVersion rootProject.ext.targetSdk
-        versionCode 2
-        versionName "0.1.1"
+        versionCode 3
+        versionName "0.2"
     }
     buildTypes {
         release {

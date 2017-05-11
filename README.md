@@ -181,6 +181,6 @@ Add in your app `build.gradle` the dependency:
 ```gradle
 dependencies {
   ...
-  compile 'com.francescocervone:rxdrive:0.1.1'
+  compile 'com.francescocervone:rxdrive:0.2'
 }
 ```

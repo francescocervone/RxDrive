@@ -41,6 +41,8 @@ android {
         }
     }
     lintOptions {
+        textReport true
+        textOutput 'stdout'
         abortOnError true
     }
 }

@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: "com.android.application"
 
 android {
     compileSdkVersion rootProject.ext.compileSdk
@@ -14,7 +14,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
     lintOptions {
@@ -28,14 +28,14 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.12'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    testImplementation "junit:junit:4.12"
+    implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
     implementation "io.reactivex.rxjava2:rxjava:2.1.5"
-    implementation 'commons-io:commons-io:2.4'
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.android.support:recyclerview-v7:26.1.0'
-    implementation 'com.github.chrisbanes:PhotoView:1.3.1'
-    implementation 'com.github.bumptech.glide:glide:4.2.0'
-    implementation project(':rxdrive')
+    implementation "commons-io:commons-io:2.4"
+    implementation "com.android.support:appcompat-v7:26.1.0"
+    implementation "com.android.support:recyclerview-v7:26.1.0"
+    implementation "com.github.chrisbanes:PhotoView:1.3.1"
+    implementation "com.github.bumptech.glide:glide:4.2.0"
+    implementation project(":rxdrive")
 }

@@ -26,12 +26,12 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class ImageActivity extends AppCompatActivity {
@@ -41,7 +41,7 @@ public class ImageActivity extends AppCompatActivity {
     private ImageView mImageView;
     private PhotoViewAttacher mAttacher;
     private RxDrive mRxDrive;
-    private CompositeSubscription mSubscriptions = new CompositeSubscription();
+    private CompositeDisposable mSubscriptions = new CompositeDisposable();
     private DriveId mDriveId;
 
     @Override
@@ -77,14 +77,14 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     private void setupConnection() {
-        Subscription subscription = mRxDrive.connectionObservable()
+        Disposable disposable = mRxDrive.connectionObservable()
                 .observeOn(Schedulers.io())
                 .filter(ConnectionState::isConnected)
-                .flatMapSingle(connectionState -> mRxDrive.open(mDriveId, getProgressSubscriber()))
+                .flatMapSingle(connectionState -> mRxDrive.open(mDriveId, getProgressObserver()))
                 .observeOn(AndroidSchedulers.mainThread())
                 .onErrorResumeNext(Observable.empty())
                 .subscribe(this::loadImage);
-        mSubscriptions.add(subscription);
+        mSubscriptions.add(disposable);
     }
 
     private void loadImage(InputStream inputStream) {
@@ -117,11 +117,16 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     @NonNull
-    private Subscriber<Progress> getProgressSubscriber() {
-        return new Subscriber<Progress>() {
+    private Observer<Progress> getProgressObserver() {
+        return new Observer<Progress>() {
             @Override
-            public void onCompleted() {
+            public void onSubscribe(Disposable d) {
 
+            }
+
+            @Override
+            public void onNext(Progress progress) {
+                mTextView.setText(progress.getPercentage() + "%");
             }
 
             @Override
@@ -130,8 +135,8 @@ public class ImageActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNext(Progress progress) {
-                mTextView.setText(progress.getPercentage() + "%");
+            public void onComplete() {
+
             }
         };
     }

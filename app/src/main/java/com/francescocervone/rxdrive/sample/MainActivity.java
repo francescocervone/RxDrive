@@ -15,11 +15,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveId;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements DriveFileAdapter.OnDriveIdClickListener {
 
@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
     private RecyclerView mRecyclerView;
     private Button mAddPhoto;
 
-    private CompositeSubscription mSubscriptions = new CompositeSubscription();
+    private CompositeDisposable mCompositeDisposable = new CompositeDisposable();
     private DriveFileAdapter mAdapter;
     private RxDrive mRxDrive;
 
@@ -66,11 +66,11 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
     protected void onStop() {
         super.onStop();
         mRxDrive.disconnect();
-        mSubscriptions.unsubscribe();
+        mCompositeDisposable.clear();
     }
 
     private void setupGoogleApiClientObservable() {
-        Subscription subscription = mRxDrive.connectionObservable()
+        Disposable disposable = mRxDrive.connectionObservable()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(connectionState -> {
@@ -94,25 +94,26 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
                             break;
                     }
                 }, this::log);
-        mSubscriptions.add(subscription);
+        mCompositeDisposable.add(disposable);
     }
 
     private void list() {
         mRxDrive.listChildren(mRxDrive.getAppFolder())
                 .subscribeOn(Schedulers.io())
-                .flatMapObservable(Observable::from)
+                .flatMapObservable(Observable::fromIterable)
                 .flatMapSingle(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
                 .toList()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(driveFiles -> mAdapter.setResources(driveFiles), this::log);
     }
 
-    private Subscription createFile(Uri uri) {
-        return mRxDrive.createFile(mRxDrive.getAppFolder(), uri)
-                .subscribeOn(Schedulers.io())
-                .flatMap(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(metadata -> mAdapter.addResource(metadata), this::log);
+    private void createFile(Uri uri) {
+        mCompositeDisposable.add(
+                mRxDrive.createFile(mRxDrive.getAppFolder(), uri)
+                        .subscribeOn(Schedulers.io())
+                        .flatMap(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(metadata -> mAdapter.addResource(metadata), this::log));
     }
 
     @Override

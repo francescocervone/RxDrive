@@ -34,11 +34,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import rx.Completable;
-import rx.Observable;
-import rx.Single;
-import rx.Subscriber;
-import rx.subjects.PublishSubject;
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.Single;
+import io.reactivex.subjects.PublishSubject;
 
 public class RxDrive {
 
@@ -587,26 +587,26 @@ public class RxDrive {
      * Open a driveId
      *
      * @param driveId            the file to open
-     * @param progressSubscriber the subscriber that listen for download progress
+     * @param progressObserver the subscriber that listen for download progress
      * @return the InputStream of the content
      */
     public Single<InputStream> open(final DriveId driveId,
-                                    final Subscriber<Progress> progressSubscriber) {
+                                    final Observer<Progress> progressObserver) {
         return Single.fromCallable(() -> {
             DriveApi.DriveContentsResult result = driveId.asDriveFile().open(
                     mClient,
                     DriveFile.MODE_READ_ONLY,
                     (bytesDownloaded, bytesExpected) -> {
-                        if (progressSubscriber != null) {
+                        if (progressObserver != null) {
                             Log.d("maccio", "onProgress: " + bytesDownloaded + " " + bytesExpected);
-                            progressSubscriber.onNext(
+                            progressObserver.onNext(
                                     new Progress(bytesDownloaded, bytesExpected));
                         }
                     })
                     .await();
             if (result.getStatus().isSuccess()) {
-                if (progressSubscriber != null) {
-                    progressSubscriber.onCompleted();
+                if (progressObserver != null) {
+                    progressObserver.onComplete();
                 }
                 return result.getDriveContents().getInputStream();
             } else {

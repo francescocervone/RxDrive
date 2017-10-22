@@ -16,8 +16,8 @@ import com.google.android.gms.drive.Metadata;
 import java.util.ArrayList;
 import java.util.List;
 
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.DriveFileViewHolder> {
     private static final String TAG = DriveFileAdapter.class.getName();

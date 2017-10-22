@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action0;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.DriveFileViewHolder> {
@@ -36,8 +34,8 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
 
         public DriveFileViewHolder(View itemView) {
             super(itemView);
-            mTextView = (TextView) itemView.findViewById(R.id.percentage);
-            mRemoveButton = (Button) itemView.findViewById(R.id.remove);
+            mTextView = itemView.findViewById(R.id.percentage);
+            mRemoveButton = itemView.findViewById(R.id.remove);
         }
     }
 
@@ -75,31 +73,11 @@ public class DriveFileAdapter extends RecyclerView.Adapter<DriveFileAdapter.Driv
     public void onBindViewHolder(final DriveFileViewHolder holder, int position) {
         final Metadata metadata = mResources.get(position);
         holder.mTextView.setText(metadata.getTitle());
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onDriveIdClick(metadata.getDriveId());
-            }
-        });
-        holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mRxDrive.delete(metadata.getDriveId().asDriveResource())
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action0() {
-                            @Override
-                            public void call() {
-                                remove(holder.getAdapterPosition());
-                            }
-                        }, new Action1<Throwable>() {
-                            @Override
-                            public void call(Throwable throwable) {
-                                log(throwable);
-                            }
-                        });
-            }
-        });
+        holder.itemView.setOnClickListener(v -> mListener.onDriveIdClick(metadata.getDriveId()));
+        holder.mRemoveButton.setOnClickListener(v -> mRxDrive.delete(metadata.getDriveId().asDriveResource())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> remove(holder.getAdapterPosition()), this::log));
     }
 
     private void remove(int position) {

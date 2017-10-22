@@ -131,31 +131,31 @@ public class ConnectionState {
         private ConnectionSuspendedCause mCause;
         private ConnectionResult mConnectionResult;
 
-        public Builder() {
+        Builder() {
 
         }
 
-        public Builder state(State state) {
+        Builder state(State state) {
             mState = state;
             return this;
         }
 
-        public Builder bundle(Bundle bundle) {
+        Builder bundle(Bundle bundle) {
             mBundle = bundle;
             return this;
         }
 
-        public Builder cause(ConnectionSuspendedCause cause) {
+        Builder cause(ConnectionSuspendedCause cause) {
             mCause = cause;
             return this;
         }
 
-        public Builder result(ConnectionResult result) {
+        Builder result(ConnectionResult result) {
             mConnectionResult = result;
             return this;
         }
 
-        public ConnectionState build() {
+        ConnectionState build() {
             return new ConnectionState(mState, mBundle, mCause, mConnectionResult);
         }
     }

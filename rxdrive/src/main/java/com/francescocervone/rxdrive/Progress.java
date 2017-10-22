@@ -4,7 +4,7 @@ public class Progress {
     private long mBytesDownloaded;
     private long mBytesExpected;
 
-    public Progress(long bytesDownloaded, long bytesExpected) {
+    Progress(long bytesDownloaded, long bytesExpected) {
         mBytesDownloaded = bytesDownloaded;
         mBytesExpected = bytesExpected;
     }

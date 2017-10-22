@@ -7,25 +7,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.francescocervone.rxdrive.ConnectionState;
 import com.francescocervone.rxdrive.RxDrive;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveId;
-import com.google.android.gms.drive.Metadata;
-
-import java.util.List;
 
 import rx.Observable;
-import rx.Single;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -45,16 +37,13 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        mAddPhoto = (Button) findViewById(R.id.add_photo);
+        mRecyclerView = findViewById(R.id.recycler_view);
+        mAddPhoto = findViewById(R.id.add_photo);
 
-        mAddPhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                startActivityForResult(intent, PICK_IMAGE_CODE);
-            }
+        mAddPhoto.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            startActivityForResult(intent, PICK_IMAGE_CODE);
         });
 
         mRxDrive = new RxDrive(new GoogleApiClient.Builder(this)
@@ -84,90 +73,46 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
         Subscription subscription = mRxDrive.connectionObservable()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<ConnectionState>() {
-                    @Override
-                    public void call(ConnectionState connectionState) {
-                        switch (connectionState.getState()) {
-                            case CONNECTED:
-                                mAddPhoto.setEnabled(true);
-                                list();
-                                break;
-                            case SUSPENDED:
-                                mAddPhoto.setEnabled(false);
-                                log(connectionState.getCause().name());
-                                break;
-                            case FAILED:
-                                mAddPhoto.setEnabled(false);
-                                log(connectionState.getConnectionResult().getErrorMessage());
-                                mRxDrive.resolveConnection(MainActivity.this, connectionState.getConnectionResult());
-                                break;
-                            case UNABLE_TO_RESOLVE:
-                                log("Unable to resolve");
-                                finish();
-                                break;
-                        }
+                .subscribe(connectionState -> {
+                    switch (connectionState.getState()) {
+                        case CONNECTED:
+                            mAddPhoto.setEnabled(true);
+                            list();
+                            break;
+                        case SUSPENDED:
+                            mAddPhoto.setEnabled(false);
+                            log(connectionState.getCause().name());
+                            break;
+                        case FAILED:
+                            mAddPhoto.setEnabled(false);
+                            log(connectionState.getConnectionResult().getErrorMessage());
+                            mRxDrive.resolveConnection(MainActivity.this, connectionState.getConnectionResult());
+                            break;
+                        case UNABLE_TO_RESOLVE:
+                            log("Unable to resolve");
+                            finish();
+                            break;
                     }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        log(throwable);
-                    }
-                });
+                }, this::log);
         mSubscriptions.add(subscription);
     }
 
     private void list() {
         mRxDrive.listChildren(mRxDrive.getAppFolder())
                 .subscribeOn(Schedulers.io())
-                .flatMapObservable(new Func1<List<DriveId>, Observable<DriveId>>() {
-                    @Override
-                    public Observable<DriveId> call(List<DriveId> driveIds) {
-                        return Observable.from(driveIds);
-                    }
-                })
-                .flatMap(new Func1<DriveId, Observable<Metadata>>() {
-                    @Override
-                    public Observable<Metadata> call(DriveId driveId) {
-                        return mRxDrive.getMetadata(driveId.asDriveResource()).toObservable();
-                    }
-                })
+                .flatMapObservable(Observable::from)
+                .flatMapSingle(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
                 .toList()
-                .toSingle()
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Metadata>>() {
-                    @Override
-                    public void call(List<Metadata> driveFiles) {
-                        mAdapter.setResources(driveFiles);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        log(throwable);
-                    }
-                });
+                .subscribe(driveFiles -> mAdapter.setResources(driveFiles), this::log);
     }
 
     private Subscription createFile(Uri uri) {
         return mRxDrive.createFile(mRxDrive.getAppFolder(), uri)
                 .subscribeOn(Schedulers.io())
-                .flatMap(new Func1<DriveId, Single<Metadata>>() {
-                    @Override
-                    public Single<Metadata> call(DriveId driveId) {
-                        return mRxDrive.getMetadata(driveId.asDriveResource());
-                    }
-                })
+                .flatMap(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Metadata>() {
-                    @Override
-                    public void call(Metadata metadata) {
-                        mAdapter.addResource(metadata);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        log(throwable);
-                    }
-                });
+                .subscribe(metadata -> mAdapter.addResource(metadata), this::log);
     }
 
     @Override

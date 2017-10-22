@@ -26,6 +26,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
+import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -72,7 +73,7 @@ public class ImageActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         mRxDrive.disconnect();
-        mSubscriptions.unsubscribe();
+        mSubscriptions.clear();
     }
 
     private void setupConnection() {
@@ -81,9 +82,8 @@ public class ImageActivity extends AppCompatActivity {
                 .filter(ConnectionState::isConnected)
                 .flatMapSingle(connectionState -> mRxDrive.open(mDriveId, getProgressSubscriber()))
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::loadImage, throwable -> {
-
-                });
+                .onErrorResumeNext(Observable.empty())
+                .subscribe(this::loadImage);
         mSubscriptions.add(subscription);
     }
 

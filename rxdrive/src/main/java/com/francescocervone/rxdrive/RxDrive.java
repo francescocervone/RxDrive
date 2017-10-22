@@ -60,7 +60,8 @@ public class RxDrive {
         }
     };
 
-    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = connectionResult -> mConnectionStatePublishSubject.onNext(ConnectionState.failed(connectionResult));
+    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener =
+            connectionResult -> mConnectionStatePublishSubject.onNext(ConnectionState.failed(connectionResult));
 
     /**
      * @param builder is a GoogleApiClient builder for your application

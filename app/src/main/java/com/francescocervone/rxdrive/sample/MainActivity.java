@@ -101,9 +101,8 @@ public class MainActivity extends AppCompatActivity implements DriveFileAdapter.
         mRxDrive.listChildren(mRxDrive.getAppFolder())
                 .subscribeOn(Schedulers.io())
                 .flatMapObservable(Observable::from)
-                .flatMap(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()).toObservable())
+                .flatMapSingle(driveId -> mRxDrive.getMetadata(driveId.asDriveResource()))
                 .toList()
-                .toSingle()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(driveFiles -> mAdapter.setResources(driveFiles), this::log);
     }

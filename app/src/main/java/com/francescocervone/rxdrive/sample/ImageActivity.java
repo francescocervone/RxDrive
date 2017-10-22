@@ -26,12 +26,9 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-import rx.Single;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import uk.co.senab.photoview.PhotoViewAttacher;
@@ -57,8 +54,8 @@ public class ImageActivity extends AppCompatActivity {
             return;
         }
 
-        mTextView = (TextView) findViewById(R.id.percentage);
-        mImageView = (ImageView) findViewById(R.id.image);
+        mTextView = findViewById(R.id.percentage);
+        mImageView = findViewById(R.id.image);
         mAttacher = new PhotoViewAttacher(mImageView, true);
 
         mRxDrive = new RxDrive(new GoogleApiClient.Builder(this).addScope(Drive.SCOPE_APPFOLDER));
@@ -81,29 +78,11 @@ public class ImageActivity extends AppCompatActivity {
     private void setupConnection() {
         Subscription subscription = mRxDrive.connectionObservable()
                 .observeOn(Schedulers.io())
-                .filter(new Func1<ConnectionState, Boolean>() {
-                    @Override
-                    public Boolean call(ConnectionState connectionState) {
-                        return connectionState.isConnected();
-                    }
-                })
-                .flatMapSingle(new Func1<ConnectionState, Single<InputStream>>() {
-                    @Override
-                    public Single<InputStream> call(ConnectionState connectionState) {
-                        return mRxDrive.open(mDriveId, getProgressSubscriber());
-                    }
-                })
+                .filter(ConnectionState::isConnected)
+                .flatMapSingle(connectionState -> mRxDrive.open(mDriveId, getProgressSubscriber()))
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<InputStream>() {
-                    @Override
-                    public void call(InputStream inputStream) {
-                        loadImage(inputStream);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
+                .subscribe(this::loadImage, throwable -> {
 
-                    }
                 });
         mSubscriptions.add(subscription);
     }

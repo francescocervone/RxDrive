@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -34,13 +33,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
 import rx.Subscriber;
-import rx.functions.Action0;
 import rx.subjects.PublishSubject;
 
 public class RxDrive {
@@ -63,12 +60,7 @@ public class RxDrive {
         }
     };
 
-    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
-        @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-            mConnectionStatePublishSubject.onNext(ConnectionState.failed(connectionResult));
-        }
-    };
+    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = connectionResult -> mConnectionStatePublishSubject.onNext(ConnectionState.failed(connectionResult));
 
     /**
      * @param builder is a GoogleApiClient builder for your application
@@ -148,16 +140,13 @@ public class RxDrive {
      * @return an Observable with the driveId if exists
      */
     public Single<DriveId> fetchDriveId(final String s) {
-        return Single.fromCallable(new Callable<DriveId>() {
-            @Override
-            public DriveId call() throws Exception {
-                DriveApi.DriveIdResult driveIdResult = Drive.DriveApi.fetchDriveId(mClient, s)
-                        .await();
-                if (driveIdResult.getStatus().isSuccess()) {
-                    return driveIdResult.getDriveId();
-                } else {
-                    throw new RxDriveException(driveIdResult.getStatus());
-                }
+        return Single.fromCallable(() -> {
+            DriveApi.DriveIdResult driveIdResult = Drive.DriveApi.fetchDriveId(mClient, s)
+                    .await();
+            if (driveIdResult.getStatus().isSuccess()) {
+                return driveIdResult.getDriveId();
+            } else {
+                throw new RxDriveException(driveIdResult.getStatus());
             }
         });
     }
@@ -168,25 +157,22 @@ public class RxDrive {
      * @return an Observable with the list of the resources
      */
     public Single<List<DriveId>> listChildren(final DriveFolder driveFolder) {
-        return Single.fromCallable(new Callable<List<DriveId>>() {
-            @Override
-            public List<DriveId> call() throws Exception {
-                List<DriveId> list = new ArrayList<>();
+        return Single.fromCallable(() -> {
+            List<DriveId> list = new ArrayList<>();
 
-                DriveApi.MetadataBufferResult result = driveFolder.listChildren(mClient).await();
+            DriveApi.MetadataBufferResult result = driveFolder.listChildren(mClient).await();
 
-                if (result.getStatus().isSuccess()) {
-                    MetadataBuffer buffer = result.getMetadataBuffer();
+            if (result.getStatus().isSuccess()) {
+                MetadataBuffer buffer = result.getMetadataBuffer();
 
-                    for (Metadata m : buffer) {
-                        list.add(m.getDriveId());
-                    }
-
-                    buffer.release();
-                    return list;
-                } else {
-                    throw new RxDriveException(result.getStatus());
+                for (Metadata m : buffer) {
+                    list.add(m.getDriveId());
                 }
+
+                buffer.release();
+                return list;
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -199,25 +185,22 @@ public class RxDrive {
      * @return the list of the parents
      */
     public Single<List<DriveId>> listParents(final DriveResource driveResource) {
-        return Single.fromCallable(new Callable<List<DriveId>>() {
-            @Override
-            public List<DriveId> call() throws Exception {
-                List<DriveId> list = new ArrayList<>();
+        return Single.fromCallable(() -> {
+            List<DriveId> list = new ArrayList<>();
 
-                DriveApi.MetadataBufferResult result = driveResource.listParents(mClient).await();
+            DriveApi.MetadataBufferResult result = driveResource.listParents(mClient).await();
 
-                if (result.getStatus().isSuccess()) {
-                    MetadataBuffer buffer = result.getMetadataBuffer();
+            if (result.getStatus().isSuccess()) {
+                MetadataBuffer buffer = result.getMetadataBuffer();
 
-                    for (Metadata m : buffer) {
-                        list.add(m.getDriveId());
-                    }
-
-                    buffer.release();
-                    return list;
-                } else {
-                    throw new RxDriveException(result.getStatus());
+                for (Metadata m : buffer) {
+                    list.add(m.getDriveId());
                 }
+
+                buffer.release();
+                return list;
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -231,13 +214,10 @@ public class RxDrive {
      * @return true if the operation succeeds
      */
     public Completable setParents(final DriveResource driveResource, final Set<DriveId> parents) {
-        return Completable.fromAction(new Action0() {
-            @Override
-            public void call() {
-                Status status = driveResource.setParents(mClient, parents).await();
-                if (!status.isSuccess()) {
-                    throw new RxDriveException(status);
-                }
+        return Completable.fromAction(() -> {
+            Status status = driveResource.setParents(mClient, parents).await();
+            if (!status.isSuccess()) {
+                throw new RxDriveException(status);
             }
         });
     }
@@ -249,27 +229,24 @@ public class RxDrive {
      * @return
      */
     public Single<List<DriveId>> query(final Query query) {
-        return Single.fromCallable(new Callable<List<DriveId>>() {
-            @Override
-            public List<DriveId> call() throws Exception {
-                List<DriveId> list = new ArrayList<>();
+        return Single.fromCallable(() -> {
+            List<DriveId> list = new ArrayList<>();
 
-                DriveApi.MetadataBufferResult result = Drive.DriveApi
-                        .query(mClient, query)
-                        .await();
+            DriveApi.MetadataBufferResult result = Drive.DriveApi
+                    .query(mClient, query)
+                    .await();
 
-                if (result.getStatus().isSuccess()) {
-                    MetadataBuffer buffer = result.getMetadataBuffer();
+            if (result.getStatus().isSuccess()) {
+                MetadataBuffer buffer = result.getMetadataBuffer();
 
-                    for (Metadata metadata : buffer) {
-                        list.add(metadata.getDriveId());
-                    }
-
-                    buffer.release();
-                    return list;
-                } else {
-                    throw new RxDriveException(result.getStatus());
+                for (Metadata metadata : buffer) {
+                    list.add(metadata.getDriveId());
                 }
+
+                buffer.release();
+                return list;
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -281,26 +258,23 @@ public class RxDrive {
      * @return an Observable with the list of the resources
      */
     public Single<List<DriveId>> queryChildren(final DriveFolder driveFolder, final Query query) {
-        return Single.fromCallable(new Callable<List<DriveId>>() {
-            @Override
-            public List<DriveId> call() throws Exception {
-                List<DriveId> list = new ArrayList<>();
-                DriveApi.MetadataBufferResult result = driveFolder
-                        .queryChildren(mClient, query)
-                        .await();
+        return Single.fromCallable(() -> {
+            List<DriveId> list = new ArrayList<>();
+            DriveApi.MetadataBufferResult result = driveFolder
+                    .queryChildren(mClient, query)
+                    .await();
 
-                if (result.getStatus().isSuccess()) {
-                    MetadataBuffer buffer = result.getMetadataBuffer();
+            if (result.getStatus().isSuccess()) {
+                MetadataBuffer buffer = result.getMetadataBuffer();
 
-                    for (Metadata metadata : buffer) {
-                        list.add(metadata.getDriveId());
-                    }
-
-                    buffer.release();
-                    return list;
-                } else {
-                    throw new RxDriveException(result.getStatus());
+                for (Metadata metadata : buffer) {
+                    list.add(metadata.getDriveId());
                 }
+
+                buffer.release();
+                return list;
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -425,32 +399,29 @@ public class RxDrive {
             final String title,
             final String mimeType) {
 
-        return Single.fromCallable(new Callable<DriveId>() {
-            @Override
-            public DriveId call() throws Exception {
-                DriveContents driveContents = Drive.DriveApi.newDriveContents(mClient)
-                        .await()
-                        .getDriveContents();
+        return Single.fromCallable(() -> {
+            DriveContents driveContents = Drive.DriveApi.newDriveContents(mClient)
+                    .await()
+                    .getDriveContents();
 
-                IOUtils.copy(
-                        inputStream,
-                        driveContents.getOutputStream());
+            IOUtils.copy(
+                    inputStream,
+                    driveContents.getOutputStream());
 
-                DriveFolder.DriveFileResult result = folder
-                        .createFile(
-                                mClient,
-                                new MetadataChangeSet.Builder()
-                                        .setTitle(title)
-                                        .setMimeType(mimeType)
-                                        .build(),
-                                driveContents)
-                        .await();
+            DriveFolder.DriveFileResult result = folder
+                    .createFile(
+                            mClient,
+                            new MetadataChangeSet.Builder()
+                                    .setTitle(title)
+                                    .setMimeType(mimeType)
+                                    .build(),
+                            driveContents)
+                    .await();
 
-                if (result.getStatus().isSuccess()) {
-                    return result.getDriveFile().getDriveId();
-                } else {
-                    throw new RxDriveException(result.getStatus());
-                }
+            if (result.getStatus().isSuccess()) {
+                return result.getDriveFile().getDriveId();
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -489,20 +460,17 @@ public class RxDrive {
      * @return an Observable with the DriveId
      */
     public Single<DriveFile> updateFileContent(final DriveFile driveFile, final InputStream content) {
-        return Single.fromCallable(new Callable<DriveFile>() {
-            @Override
-            public DriveFile call() throws Exception {
-                DriveApi.DriveContentsResult driveContentsResult = driveFile
-                        .open(mClient, DriveFile.MODE_WRITE_ONLY, null)
-                        .await();
-                DriveContents driveContents = driveContentsResult.getDriveContents();
-                IOUtils.copy(content, driveContents.getOutputStream());
-                Status status = driveContents.commit(mClient, null).await();
-                if (status.isSuccess()) {
-                    return driveFile;
-                } else {
-                    throw new RxDriveException(status);
-                }
+        return Single.fromCallable(() -> {
+            DriveApi.DriveContentsResult driveContentsResult = driveFile
+                    .open(mClient, DriveFile.MODE_WRITE_ONLY, null)
+                    .await();
+            DriveContents driveContents = driveContentsResult.getDriveContents();
+            IOUtils.copy(content, driveContents.getOutputStream());
+            Status status = driveContents.commit(mClient, null).await();
+            if (status.isSuccess()) {
+                return driveFile;
+            } else {
+                throw new RxDriveException(status);
             }
         });
     }
@@ -515,21 +483,18 @@ public class RxDrive {
      * @return an observable with the new DriveFolder object
      */
     public Single<DriveFolder> createFolder(final DriveFolder folder, final String title) {
-        return Single.fromCallable(new Callable<DriveFolder>() {
-            @Override
-            public DriveFolder call() throws Exception {
-                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                        .setTitle(title)
-                        .build();
-                DriveFolder.DriveFolderResult result = folder.createFolder(
-                        mClient,
-                        metadataChangeSet)
-                        .await();
-                if (result.getStatus().isSuccess()) {
-                    return result.getDriveFolder();
-                } else {
-                    throw new RxDriveException(result.getStatus());
-                }
+        return Single.fromCallable(() -> {
+            MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
+                    .setTitle(title)
+                    .build();
+            DriveFolder.DriveFolderResult result = folder.createFolder(
+                    mClient,
+                    metadataChangeSet)
+                    .await();
+            if (result.getStatus().isSuccess()) {
+                return result.getDriveFolder();
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
 
@@ -542,13 +507,10 @@ public class RxDrive {
      * @return an Observable with `true` if the resource is removed
      */
     public Completable delete(final DriveResource driveResource) {
-        return Completable.fromAction(new Action0() {
-            @Override
-            public void call() {
-                Status status = driveResource.delete(mClient).await();
-                if (!status.isSuccess()) {
-                    throw new RxDriveException(status);
-                }
+        return Completable.fromAction(() -> {
+            Status status = driveResource.delete(mClient).await();
+            if (!status.isSuccess()) {
+                throw new RxDriveException(status);
             }
         });
     }
@@ -560,13 +522,10 @@ public class RxDrive {
      * @return true if the operation succeeds
      */
     public Completable trash(final DriveResource driveResource) {
-        return Completable.fromAction(new Action0() {
-            @Override
-            public void call() {
-                Status status = driveResource.trash(mClient).await();
-                if (!status.isSuccess()) {
-                    throw new RxDriveException(status);
-                }
+        return Completable.fromAction(() -> {
+            Status status = driveResource.trash(mClient).await();
+            if (!status.isSuccess()) {
+                throw new RxDriveException(status);
             }
         });
     }
@@ -578,13 +537,10 @@ public class RxDrive {
      * @return true if the operation succeeds
      */
     public Completable untrash(final DriveResource driveResource) {
-        return Completable.fromAction(new Action0() {
-            @Override
-            public void call() {
-                Status status = driveResource.untrash(mClient).await();
-                if (!status.isSuccess()) {
-                    throw new RxDriveException(status);
-                }
+        return Completable.fromAction(() -> {
+            Status status = driveResource.untrash(mClient).await();
+            if (!status.isSuccess()) {
+                throw new RxDriveException(status);
             }
         });
     }
@@ -595,12 +551,7 @@ public class RxDrive {
      * @return nothing
      */
     public Completable sync() {
-        return Completable.fromAction(new Action0() {
-            @Override
-            public void call() {
-                Drive.DriveApi.requestSync(mClient).await();
-            }
-        });
+        return Completable.fromAction(() -> Drive.DriveApi.requestSync(mClient).await());
     }
 
     /**
@@ -610,15 +561,12 @@ public class RxDrive {
      * @return the Metadata of the driveResource
      */
     public Single<Metadata> getMetadata(final DriveResource driveResource) {
-        return Single.fromCallable(new Callable<Metadata>() {
-            @Override
-            public Metadata call() throws Exception {
-                DriveResource.MetadataResult result = driveResource.getMetadata(mClient).await();
-                if (result.getStatus().isSuccess()) {
-                    return result.getMetadata();
-                } else {
-                    throw new RxDriveException(result.getStatus());
-                }
+        return Single.fromCallable(() -> {
+            DriveResource.MetadataResult result = driveResource.getMetadata(mClient).await();
+            if (result.getStatus().isSuccess()) {
+                return result.getMetadata();
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }
@@ -643,31 +591,25 @@ public class RxDrive {
      */
     public Single<InputStream> open(final DriveId driveId,
                                     final Subscriber<Progress> progressSubscriber) {
-        return Single.fromCallable(new Callable<InputStream>() {
-            @Override
-            public InputStream call() throws Exception {
-                DriveApi.DriveContentsResult result = driveId.asDriveFile().open(
-                        mClient,
-                        DriveFile.MODE_READ_ONLY,
-                        new DriveFile.DownloadProgressListener() {
-                            @Override
-                            public void onProgress(long bytesDownloaded, long bytesExpected) {
-                                if (progressSubscriber != null) {
-                                    Log.d("maccio", "onProgress: " + bytesDownloaded + " " + bytesExpected);
-                                    progressSubscriber.onNext(
-                                            new Progress(bytesDownloaded, bytesExpected));
-                                }
-                            }
-                        })
-                        .await();
-                if (result.getStatus().isSuccess()) {
-                    if (progressSubscriber != null) {
-                        progressSubscriber.onCompleted();
-                    }
-                    return result.getDriveContents().getInputStream();
-                } else {
-                    throw new RxDriveException(result.getStatus());
+        return Single.fromCallable(() -> {
+            DriveApi.DriveContentsResult result = driveId.asDriveFile().open(
+                    mClient,
+                    DriveFile.MODE_READ_ONLY,
+                    (bytesDownloaded, bytesExpected) -> {
+                        if (progressSubscriber != null) {
+                            Log.d("maccio", "onProgress: " + bytesDownloaded + " " + bytesExpected);
+                            progressSubscriber.onNext(
+                                    new Progress(bytesDownloaded, bytesExpected));
+                        }
+                    })
+                    .await();
+            if (result.getStatus().isSuccess()) {
+                if (progressSubscriber != null) {
+                    progressSubscriber.onCompleted();
                 }
+                return result.getDriveContents().getInputStream();
+            } else {
+                throw new RxDriveException(result.getStatus());
             }
         });
     }

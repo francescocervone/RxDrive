@@ -45,6 +45,7 @@ android {
         textOutput 'stdout'
         abortOnError true
     }
+    buildToolsVersion '26.0.2'
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
